@@ -1,4 +1,6 @@
-from flask import Blueprint, request, redirect, url_for, flash, session
+# auth.py
+
+from flask import Blueprint, request, redirect, url_for, session, flash, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from config import Config
@@ -7,11 +9,13 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
+    # Kullanıcı kaydı işlemi
+    # User registration process
     username = request.form['username']
     password = request.form['password']
     hashed_password = generate_password_hash(password, method='sha256')
 
-    conn = sqlite3.connect(Config.DATABASE)
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     try:
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
@@ -25,10 +29,12 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
+    # Kullanıcı girişi işlemi
+    # User login process
     username = request.form['username']
     password = request.form['password']
 
-    conn = sqlite3.connect(Config.DATABASE)
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("SELECT id, password FROM users WHERE username = ?", (username,))
     user = c.fetchone()
@@ -46,6 +52,8 @@ def login():
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
+    # Kullanıcı çıkışı işlemi
+    # User logout process
     session.clear()
     flash('Çıkış yaptınız.')
     return redirect(url_for('views.upload_form'))

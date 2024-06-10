@@ -1,6 +1,8 @@
+# views.py
+
+from flask import Blueprint, request, redirect, url_for, session, send_file, flash, render_template
 import os
 import sqlite3
-from flask import Blueprint, request, redirect, url_for, send_file, render_template, session, flash
 from werkzeug.utils import secure_filename
 from encryption import generate_key, encrypt_file, decrypt_file
 from config import Config
@@ -9,12 +11,14 @@ views_bp = Blueprint('views', __name__)
 
 @views_bp.route('/')
 def upload_form():
+    # Ana yükleme formunu görüntüler
+    # Displays the main upload form
     if 'logged_in' not in session:
         return render_template('index.html', files=[])
 
     user_id = session['user_id']
 
-    conn = sqlite3.connect(Config.DATABASE)
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("SELECT id, filename FROM files WHERE user_id = ?", (user_id,))
     files = c.fetchall()
@@ -25,6 +29,8 @@ def upload_form():
 
 @views_bp.route('/upload', methods=['POST'])
 def upload_file():
+    # Dosya yükleme işlemi
+    # File upload process
     if 'logged_in' not in session:
         return 'Önce giriş yapmalısınız!', 401
 
@@ -41,7 +47,7 @@ def upload_file():
         key = generate_key(password, salt)
         encrypt_file(file_path, key)
 
-        conn = sqlite3.connect(Config.DATABASE)
+        conn = sqlite3.connect('files.db')
         c = conn.cursor()
         c.execute("INSERT INTO files (filename, key, salt, user_id) VALUES (?, ?, ?, ?)", (filename, key.decode(), salt, user_id))
         conn.commit()
@@ -53,6 +59,8 @@ def upload_file():
 
 @views_bp.route('/download', methods=['POST'])
 def download_file():
+    # Dosya indirme işlemi
+    # File download process
     if 'logged_in' not in session:
         return 'Önce giriş yapmalısınız!', 401
 
@@ -60,7 +68,7 @@ def download_file():
     password = request.form['password']
     user_id = session['user_id']
 
-    conn = sqlite3.connect(Config.DATABASE)
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("SELECT filename, key, salt FROM files WHERE id = ? AND user_id = ?", (file_id, user_id))
     row = c.fetchone()
@@ -80,8 +88,10 @@ def download_file():
             with open(file_path, 'rb') as f:
                 data = f.read()
 
+            # Re-encrypt the file
             encrypt_file(file_path, key)
 
+            # Write the decrypted data to a temporary file for sending
             with open(temp_file_path, 'wb') as f:
                 f.write(data)
 
@@ -99,13 +109,15 @@ def download_file():
 
 @views_bp.route('/delete', methods=['POST'])
 def delete_file():
+    # Dosya silme işlemi
+    # File deletion process
     if 'logged_in' not in session:
         return 'Önce giriş yapmalısınız!', 401
 
     file_id = request.form['file_id']
     user_id = session['user_id']
 
-    conn = sqlite3.connect(Config.DATABASE)
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("SELECT filename FROM files WHERE id = ? AND user_id = ?", (file_id, user_id))
     row = c.fetchone()

@@ -1,9 +1,14 @@
+# db.py
+
 import sqlite3
-from config import Config
 
 def init_db():
-    conn = sqlite3.connect(Config.DATABASE)
+    # Veritabanını başlatır ve gerekli tabloları oluşturur
+    # Initializes the database and creates necessary tables
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
+    # Kullanıcılar tablosunun var olduğundan emin olur
+    # Ensure the users table exists
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,6 +16,8 @@ def init_db():
             password TEXT
         )
     ''')
+    # Dosyalar tablosunun var olduğundan ve user_id sütununu içerdiğinden emin olur
+    # Ensure the files table exists and includes the user_id column
     c.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +32,9 @@ def init_db():
     conn.close()
 
 def add_user_id_column():
-    conn = sqlite3.connect(Config.DATABASE)
+    # Dosyalar tablosuna user_id sütunu ekler
+    # Adds the user_id column to the files table
+    conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("PRAGMA table_info(files)")
     columns = [col[1] for col in c.fetchall()]
@@ -33,3 +42,8 @@ def add_user_id_column():
         c.execute("ALTER TABLE files ADD COLUMN user_id INTEGER")
         conn.commit()
     conn.close()
+
+# Veritabanını başlat ve gerekli sütunu ekle
+# Initialize the database and add the necessary column
+init_db()
+add_user_id_column()
