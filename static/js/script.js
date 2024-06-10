@@ -1,26 +1,27 @@
 "use strict";
 
-document.getElementById("sifre").addEventListener("input", handlePasswordInput);
+// Add event listeners to the appropriate elements
 document
-  .getElementById("showPassword")
-  .addEventListener("change", togglePasswordVisibility.bind(null, "sifre"));
-
+  .getElementById("uploadPassword")
+  .addEventListener("input", handlePasswordInput);
+document
+  .getElementById("showPasswordUpload")
+  .addEventListener("change", (event) =>
+    togglePasswordVisibility(event, "uploadPassword")
+  );
 document
   .getElementById("showPasswordDownload")
-  .addEventListener(
-    "change",
-    togglePasswordVisibility.bind(null, "downloadPassword")
+  .addEventListener("change", (event) =>
+    togglePasswordVisibility(event, "downloadPassword")
   );
-
 document
   .getElementById("showPasswordDelete")
-  .addEventListener(
-    "change",
-    togglePasswordVisibility.bind(null, "deletePassword")
+  .addEventListener("change", (event) =>
+    togglePasswordVisibility(event, "deletePassword")
   );
 
-function handlePasswordInput() {
-  const password = this.value;
+function handlePasswordInput(event) {
+  const password = event.target.value;
   const strength = checkPasswordStrength(password);
 
   updateStrengthMeter(strength.score);
@@ -57,11 +58,7 @@ function updateStrengthText(message) {
   strengthText.textContent = message;
 }
 
-function togglePasswordVisibility(inputId) {
+function togglePasswordVisibility(event, inputId) {
   const passwordInput = document.getElementById(inputId);
-  if (passwordInput.type === "password") {
-    passwordInput.type = "text";
-  } else {
-    passwordInput.type = "password";
-  }
+  passwordInput.type = event.target.checked ? "text" : "password";
 }
