@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "check-password-strength": "^2.0.10",
+    "parcel": "^2.12.0"
+  },
+  "name": "flask-cryp",
+  "version": "1.0.0",
+  "description": "a app with python flask javascript",
+  "default": "templates/index.html",
+  "scripts": {
+    "start": "parcel templates/index.html",
+    "build": "parcel build templates/index.html --dir dist"
+  },
+  "author": "zeynel",
+  "license": "ISC"
+}

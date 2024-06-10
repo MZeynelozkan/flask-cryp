@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dosya Yükle</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Dosya Yükle</h1>
+      <form method="post" enctype="multipart/form-data" action="/upload">
+        <input type="file" name="file" />
+        <input type="password" name="password" id="sifre" placeholder="Şifre" />
+        <input type="checkbox" id="showPassword" /> Şifreyi Göster
+        <progress id="strengthMeter" value="0" max="4"></progress>
+        <span id="strengthText"></span>
+        <input type="submit" value="Yükle" />
+      </form>
+
+      <h2>Yüklenen Dosyalar</h2>
+      <ul>
+        {% for file in files %}
+        <li>
+          <span>Numara: {{ file.id }} - Dosya: {{ file.filename }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <h1>Dosya İndir</h1>
+      <form method="post" action="/download">
+        <input type="text" name="file_id" placeholder="Dosya Numarası" />
+        <input
+          type="password"
+          name="password"
+          placeholder="Şifre"
+          id="downloadPassword"
+        />
+        <input type="checkbox" id="showPasswordDownload" /> Şifreyi Göster
+        <input type="submit" value="İndir" />
+      </form>
+
+      <h1>Dosya Sil</h1>
+      <form method="post" action="/delete">
+        <input type="text" name="file_id" placeholder="Dosya Numarası" />
+        <input
+          type="password"
+          name="password"
+          placeholder="Şifre"
+          id="deletePassword"
+        />
+        <input type="checkbox" id="showPasswordDelete" /> Şifreyi Göster
+        <input type="submit" value="Sil" />
+      </form>
+    </div>
+    <script type="module" src="/static/js/script.js"></script>
+  </body>
+</html>
