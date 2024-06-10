@@ -2,8 +2,9 @@ import os
 import io
 import base64
 import sqlite3
-from flask import Flask, request, redirect, url_for, send_file, render_template, flash
+from flask import Flask, request, redirect, url_for, send_file, render_template, session, flash
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -13,8 +14,6 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = os.urandom(24)  # Use a stronger random key
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 16 # 16 MB limit 
-#... (rest of the code is the same as the original code)
-
 
 def init_db():
     conn = sqlite3.connect('files.db')
@@ -25,6 +24,13 @@ def init_db():
             filename TEXT,
             key TEXT,
             salt BLOB
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
         )
     ''')
     conn.commit()
@@ -62,6 +68,9 @@ def decrypt_file(file_path, key):
 
 @app.route('/')
 def upload_form():
+    if 'logged_in' not in session:
+        return render_template('index.html', files=[])
+
     conn = sqlite3.connect('files.db')
     c = conn.cursor()
     c.execute("SELECT id, filename FROM files")
@@ -71,8 +80,56 @@ def upload_form():
 
     return render_template('index.html', files=files_list)
 
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.form['username']
+    password = request.form['password']
+    hashed_password = generate_password_hash(password, method='sha256')
+
+    conn = sqlite3.connect('files.db')
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        conn.commit()
+        flash('Kayıt başarılı! Giriş yapabilirsiniz.')
+    except sqlite3.IntegrityError:
+        flash('Kullanıcı adı zaten mevcut!')
+    conn.close()
+
+    return redirect(url_for('upload_form'))
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
+
+    conn = sqlite3.connect('files.db')
+    c = conn.cursor()
+    c.execute("SELECT id, password FROM users WHERE username = ?", (username,))
+    user = c.fetchone()
+    conn.close()
+
+    if user and check_password_hash(user[1], password):
+        session['logged_in'] = True
+        session['user_id'] = user[0]
+        session['username'] = username
+        flash('Giriş başarılı!')
+    else:
+        flash('Yanlış kullanıcı adı veya şifre!')
+
+    return redirect(url_for('upload_form'))
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    flash('Çıkış yaptınız.')
+    return redirect(url_for('upload_form'))
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    if 'logged_in' not in session:
+        return 'Önce giriş yapmalısınız!', 401
+
     file = request.files['file']
     password = request.form['password']
 
@@ -94,8 +151,12 @@ def upload_file():
         return redirect(url_for('upload_form'))
     else:
         return 'Dosya veya şifre eksik!', 400
+
 @app.route('/download', methods=['POST'])
 def download_file():
+    if 'logged_in' not in session:
+        return 'Önce giriş yapmalısınız!', 401
+
     file_id = request.form['file_id']
     password = request.form['password']
 
@@ -138,10 +199,11 @@ def download_file():
     else:
         return 'Dosya bulunamadı!', 404
 
-
-
 @app.route('/delete', methods=['POST'])
 def delete_file():
+    if 'logged_in' not in session:
+        return 'Önce giriş yapmalısınız!', 401
+
     file_id = request.form['file_id']
     password = request.form['password']
 

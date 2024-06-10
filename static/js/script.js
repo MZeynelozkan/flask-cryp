@@ -4,17 +4,19 @@ document.getElementById("sifre").addEventListener("input", handlePasswordInput);
 document
   .getElementById("showPassword")
   .addEventListener("change", togglePasswordVisibility.bind(null, "sifre"));
+
 document
   .getElementById("showPasswordDownload")
   .addEventListener(
     "change",
-    togglePasswordVisibility.bind(null, "password", "/download")
+    togglePasswordVisibility.bind(null, "downloadPassword")
   );
+
 document
   .getElementById("showPasswordDelete")
   .addEventListener(
     "change",
-    togglePasswordVisibility.bind(null, "password", "/delete")
+    togglePasswordVisibility.bind(null, "deletePassword")
   );
 
 function handlePasswordInput() {
